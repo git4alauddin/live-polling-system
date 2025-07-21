@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import StudentView from './StudentView';
+import TeacherView from './TeacherView';
+import PollCreator from './PollCreator';
 import './App.css';
 
 function App() {
@@ -24,13 +27,5 @@ function App() {
   );
 }
 
-// Placeholder components (we'll implement these next)
-function StudentView() {
-  return <div>Student Interface - Coming Soon</div>;
-}
-
-function TeacherView() {
-  return <div>Teacher Interface - Coming Soon</div>;
-}
 
 export default App;
