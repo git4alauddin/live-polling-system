@@ -348,27 +348,53 @@ button:hover {
 .student-view {
   max-width: 600px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
   font-family: 'Segoe UI', system-ui, sans-serif;
-  background: #f8fafc;
-  min-height: 100vh;
 }
 
-/* ----- Name Input Screen ----- */
+.student-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.student-name {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.new-tab-btn {
+  background: #f1f5f9;
+  color: #3b82f6;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.new-tab-btn:hover {
+  background: #e2e8f0;
+}
+
+/* Name Prompt */
 .name-prompt {
+  max-width: 400px;
+  margin: 3rem auto;
+  padding: 2rem;
   background: white;
-  padding: 2.5rem;
   border-radius: 12px;
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
   text-align: center;
-  margin: 3rem auto;
-  max-width: 400px;
 }
 
 .name-prompt h2 {
   color: #1e293b;
   margin-bottom: 1.5rem;
-  font-size: 1.5rem;
 }
 
 .name-prompt form {
@@ -379,32 +405,21 @@ button:hover {
 
 .name-prompt input {
   padding: 0.75rem 1rem;
-  font-size: 1rem;
-  border: 2px solid #e2e8f0;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
-  transition: all 0.2s;
+  font-size: 1rem;
   text-align: center;
-}
-
-.name-prompt input:focus {
-  border-color: #4CAF50;
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.2);
 }
 
 .name-prompt button {
   background: #4CAF50;
   color: white;
-  padding: 0.75rem;
   border: none;
+  padding: 0.75rem;
   border-radius: 8px;
-  font-weight: 500;
+  font-size: 1rem;
   cursor: pointer;
   transition: background 0.2s;
-}
-
-.name-prompt button:hover {
-  background: #3e8e41;
 }
 
 .name-prompt button:disabled {
@@ -412,8 +427,8 @@ button:hover {
   cursor: not-allowed;
 }
 
-/* ----- Poll Interface ----- */
-.poll-header {
+/* Poll Container */
+.poll-container {
   background: white;
   padding: 1.5rem;
   border-radius: 12px;
@@ -421,37 +436,30 @@ button:hover {
   margin-bottom: 1.5rem;
 }
 
-.poll-header h2 {
+.poll-question {
   color: #1e293b;
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 1rem 0;
   font-size: 1.25rem;
   line-height: 1.4;
-}
-
-.poll-meta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.875rem;
-  color: #64748b;
 }
 
 .time-left {
   color: #ef4444;
   font-weight: 600;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
 }
 
-.student-name {
-  color: #3b82f6;
-  font-weight: 600;
-}
-
-/* ----- Poll Options ----- */
 .options-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin: 2rem 0;
+  gap: 0.75rem;
+  margin: 1.5rem 0;
 }
+
+
+
+/* ----------------student view ----------------- */
 
 .option-btn {
   padding: 1.25rem 0.5rem;
@@ -461,13 +469,17 @@ button:hover {
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.2s;
-  color: #1e293b;
+  color: #1e293b; /* Dark text for better contrast */
   font-weight: 500;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px; /* Ensure consistent height */
 }
 
-.option-btn:hover {
-  border-color: #bae6fd;
+.option-btn:hover:not(:disabled) {
+  border-color: #4CAF50;
   background: #f8fafc;
   transform: translateY(-2px);
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
@@ -483,31 +495,60 @@ button:hover {
 .option-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
-  transform: none !important;
 }
 
-/* ----- Submit Button ----- */
-.action-bar {
-  margin: 2rem 0;
-  text-align: center;
+.option-text {
+  z-index: 1;
+  padding: 0 1rem;
+}
+
+.check-mark {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  color: #4CAF50;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+/* For better text contrast on all backgrounds */
+.option-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: white;
+  opacity: 0.9;
+  z-index: 0;
+  border-radius: 8px;
+}
+
+.option-btn.selected::before {
+  background: #f0fdf4;
+}
+
+.option-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .submit-btn {
   background: #4CAF50;
   color: white;
-  padding: 0.75rem 2rem;
   border: none;
+  padding: 0.75rem;
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  width: 100%;
+  transition: background 0.2s;
 }
 
 .submit-btn:hover:not(:disabled) {
   background: #3e8e41;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
 }
 
 .submit-btn:disabled {
@@ -515,20 +556,18 @@ button:hover {
   cursor: not-allowed;
 }
 
-/* ----- Results Display ----- */
+/* Results */
 .results-container {
   background: white;
   padding: 1.5rem;
   border-radius: 12px;
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-  margin-top: 2rem;
 }
 
 .results-container h3 {
   margin-top: 0;
   margin-bottom: 1rem;
   color: #1e293b;
-  font-size: 1.125rem;
 }
 
 .results-grid {
@@ -543,11 +582,10 @@ button:hover {
 
 .option-label {
   font-weight: 500;
-  color: #334155;
 }
 
 .result-bar-container {
-  height: 1.5rem;
+  height: 1.25rem;
   background: #f1f5f9;
   border-radius: 999px;
   position: relative;
@@ -563,7 +601,7 @@ button:hover {
 
 .percentage {
   position: absolute;
-  right: 0.75rem;
+  right: 0.5rem;
   top: 50%;
   transform: translateY(-50%);
   color: white;
@@ -572,14 +610,13 @@ button:hover {
   text-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
-/* ----- Waiting Screen ----- */
+/* Waiting Screen */
 .waiting-screen {
-  background: white;
+  text-align: center;
   padding: 2rem;
+  background: white;
   border-radius: 12px;
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-  text-align: center;
-  margin-top: 2rem;
 }
 
 .connection-status {
@@ -606,43 +643,32 @@ button:hover {
   animation: pulse 1.5s infinite;
 }
 
-.waiting-message {
-  color: #64748b;
-  margin-bottom: 1.5rem;
-}
-
-.refresh-btn {
-  background: #3b82f6;
-  color: white;
-  padding: 0.5rem 1.25rem;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.refresh-btn:hover {
-  background: #2563eb;
-}
-
-/* Animations */
 @keyframes pulse {
-  0%, 100% { opacity: 0.6; transform: scale(0.95); }
-  50% { opacity: 1; transform: scale(1.05); }
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
 
-/* Responsive Adjustments */
+/* Responsive */
 @media (max-width: 480px) {
-  .student-view {
-    padding: 1rem;
-  }
-  
   .options-grid {
     grid-template-columns: 1fr;
   }
   
-  .option-btn {
-    padding: 1rem;
+  .student-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
   }
+}
+
+/* Add to StudentView.css */
+.option-btn.correct {
+  border-color: #10b981;
+  background: #ecfdf5;
+}
+
+.correct-indicator {
+  color: #10b981;
+  font-weight: bold;
+  margin-left: 0.5rem;
 }
