@@ -35,57 +35,251 @@ button:hover {
 }
 
 
-/* ---------------------- Teacher View Styles -------------------------*/
+/* ============= TEACHER VIEW STYLES ============= */
 .teacher-view {
-  padding: 20px;
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #f8fafc;
+  min-height: 100vh;
 }
 
+/* ----- Poll Creator ----- */
 .poll-creator {
   background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
 }
 
-.input-group {
-  margin-bottom: 15px;
+.poll-creator h1 {
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
 }
 
-.input-group label {
+.poll-creator p {
+  color: #64748b;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
   display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #1e293b;
 }
 
-.input-group input {
+.form-group input[type="text"],
+.form-group input[type="number"] {
   width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.form-group input[type="text"]:focus,
+.form-group input[type="number"]:focus {
+  border-color: #4CAF50;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.2);
 }
 
 .options-editor {
-  margin: 20px 0;
+  margin: 2rem 0;
 }
 
 .option-item {
-  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  gap: 1rem;
+}
+
+.option-item input[type="checkbox"] {
+  width: 1.2rem;
+  height: 1.2rem;
+  accent-color: #4CAF50;
+}
+
+.option-item input[type="text"] {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+
+.add-option {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.add-option:hover {
+  text-decoration: underline;
 }
 
 .submit-btn {
   background: #4CAF50;
   color: white;
   border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
   cursor: pointer;
-  font-size: 16px;
+  transition: all 0.2s;
+  width: 100%;
+  margin-top: 1rem;
 }
 
 .submit-btn:hover {
-  background: #45a049;
+  background: #3e8e41;
+  transform: translateY(-1px);
+}
+
+/* ----- Results View ----- */
+.poll-results {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+}
+
+.poll-results h1 {
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+}
+
+.poll-results h2 {
+  color: #334155;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+  font-size: 1.25rem;
+  line-height: 1.4;
+}
+
+.result-item {
+  margin-bottom: 1.5rem;
+}
+
+.option-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.option-text {
+  font-weight: 500;
+  color: #334155;
+}
+
+.percentage-value {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.percentage-bar-container {
+  height: 1.25rem;
+  background: #f1f5f9;
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.percentage-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50, #22c55e);
+  border-radius: 999px;
+  transition: width 0.6s ease-out;
+  width: 0;
+}
+
+/* Student List */
+.student-list {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.student-list h3 {
+  color: #1e293b;
+  margin-bottom: 1rem;
+  font-size: 1.125rem;
+}
+
+.student-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.student-list li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.student-list li::before {
+  content: "•";
+  color: #4CAF50;
+}
+
+/* New Poll Button */
+.new-poll-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+}
+
+.new-poll-btn:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 640px) {
+  .teacher-view {
+    padding: 1rem;
+  }
+  
+  .poll-creator,
+  .poll-results {
+    padding: 1.5rem;
+  }
+  
+  .option-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
 }
 
 
@@ -150,273 +344,305 @@ button:hover {
 
 
 
-/* --------------- Student View Styles --------------------------- */
+/* ============= STUDENT VIEW STYLES ============= */
 .student-view {
   max-width: 600px;
   margin: 0 auto;
-  padding: 20px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #333;
-  background-color: #f9f9f9;
+  padding: 2rem;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #f8fafc;
   min-height: 100vh;
 }
 
-/* Name Prompt Section */
+/* ----- Name Input Screen ----- */
 .name-prompt {
-  text-align: center;
-  margin: 50px auto;
-  padding: 30px;
   background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  text-align: center;
+  margin: 3rem auto;
   max-width: 400px;
 }
 
 .name-prompt h2 {
-  color: #2c3e50;
-  margin-bottom: 20px;
+  color: #1e293b;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.name-prompt form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .name-prompt input {
-  padding: 12px 15px;
-  font-size: 16px;
-  margin: 10px 0;
-  width: 80%;
-  border: 2px solid #ddd;
-  border-radius: 6px;
-  transition: border 0.3s;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.2s;
+  text-align: center;
 }
 
 .name-prompt input:focus {
   border-color: #4CAF50;
   outline: none;
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.2);
 }
 
 .name-prompt button {
-  padding: 12px 25px;
   background: #4CAF50;
   color: white;
+  padding: 0.75rem;
   border: none;
-  border-radius: 6px;
-  font-size: 16px;
+  border-radius: 8px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.3s;
-  margin-top: 10px;
+  transition: background 0.2s;
 }
 
 .name-prompt button:hover {
   background: #3e8e41;
 }
 
-/* Poll Interface */
+.name-prompt button:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+/* ----- Poll Interface ----- */
 .poll-header {
   background: white;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  margin-bottom: 1.5rem;
 }
 
 .poll-header h2 {
-  color: #2c3e50;
-  margin: 0 0 10px 0;
+  color: #1e293b;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  line-height: 1.4;
 }
 
 .poll-meta {
   display: flex;
   justify-content: space-between;
-  color: #666;
-  font-size: 14px;
+  font-size: 0.875rem;
+  color: #64748b;
 }
 
 .time-left {
-  color: #e74c3c;
-  font-weight: bold;
+  color: #ef4444;
+  font-weight: 600;
 }
 
 .student-name {
-  color: #3498db;
-  font-weight: bold;
+  color: #3b82f6;
+  font-weight: 600;
 }
 
-/* Options Grid */
+/* ----- Poll Options ----- */
 .options-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  margin: 25px 0;
+  gap: 1rem;
+  margin: 2rem 0;
 }
 
 .option-btn {
-  padding: 20px 15px;
-  border: 2px solid #ddd;
+  padding: 1.25rem 0.5rem;
   background: white;
-  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 1rem;
   cursor: pointer;
   transition: all 0.2s;
-  font-size: 16px;
-  color: #333;
-  text-align: center;
+  color: #1e293b;
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
 .option-btn:hover {
-  background: #f5f5f5;
+  border-color: #bae6fd;
+  background: #f8fafc;
   transform: translateY(-2px);
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
 }
 
 .option-btn.selected {
   border-color: #4CAF50;
-  background: #e8f5e9;
-  color: #2e7d32;
-  font-weight: bold;
+  background: #f0fdf4;
+  color: #166534;
+  box-shadow: 0 0 0 2px #dcfce7;
 }
 
 .option-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
+  transform: none !important;
 }
 
-/* Action Bar */
+/* ----- Submit Button ----- */
 .action-bar {
+  margin: 2rem 0;
   text-align: center;
-  margin: 25px 0;
 }
 
 .submit-btn {
-  padding: 12px 30px;
   background: #4CAF50;
   color: white;
+  padding: 0.75rem 2rem;
   border: none;
-  border-radius: 6px;
-  font-size: 16px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .submit-btn:hover:not(:disabled) {
   background: #3e8e41;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
 }
 
 .submit-btn:disabled {
-  background: #95a5a6;
+  background: #94a3b8;
   cursor: not-allowed;
 }
 
-/* Results Display */
+/* ----- Results Display ----- */
 .results-container {
   background: white;
-  padding: 20px;
-  border-radius: 8px;
-  margin-top: 30px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  margin-top: 2rem;
 }
 
 .results-container h3 {
   margin-top: 0;
-  color: #2c3e50;
+  margin-bottom: 1rem;
+  color: #1e293b;
+  font-size: 1.125rem;
 }
 
 .results-grid {
-  margin-top: 15px;
+  display: grid;
+  gap: 1rem;
 }
 
 .result-item {
-  margin-bottom: 15px;
+  display: grid;
+  gap: 0.5rem;
 }
 
 .option-label {
-  font-weight: bold;
-  margin-bottom: 5px;
-  color: #333;
+  font-weight: 500;
+  color: #334155;
 }
 
 .result-bar-container {
-  height: 25px;
-  background: #ecf0f1;
-  border-radius: 12px;
-  margin: 5px 0;
+  height: 1.5rem;
+  background: #f1f5f9;
+  border-radius: 999px;
   position: relative;
   overflow: hidden;
 }
 
 .result-bar {
   height: 100%;
-  background: #4CAF50;
-  border-radius: 12px;
-  transition: width 0.5s ease-out;
+  background: linear-gradient(90deg, #4CAF50, #22c55e);
+  border-radius: 999px;
+  transition: width 0.6s ease-out;
 }
 
 .percentage {
   position: absolute;
-  right: 10px;
+  right: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
   color: white;
-  font-weight: bold;
-  text-shadow: 0 0 2px rgba(0,0,0,0.5);
-  font-size: 14px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
-/* Waiting Screen */
+/* ----- Waiting Screen ----- */
 .waiting-screen {
-  text-align: center;
-  padding: 40px 20px;
   background: white;
-  border-radius: 8px;
-  margin-top: 30px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  text-align: center;
+  margin-top: 2rem;
 }
 
 .connection-status {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 15px;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .status-indicator {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 999px;
 }
 
 .status-indicator.connected {
-  background: #2ecc71;
-  box-shadow: 0 0 8px #2ecc71;
+  background: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
 }
 
 .status-indicator.connecting {
-  background: #f39c12;
-  box-shadow: 0 0 8px #f39c12;
+  background: #f59e0b;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
   animation: pulse 1.5s infinite;
 }
 
 .waiting-message {
-  color: #7f8c8d;
-  font-size: 18px;
+  color: #64748b;
+  margin-bottom: 1.5rem;
 }
 
 .refresh-btn {
-  padding: 10px 20px;
-  background: #3498db;
+  background: #3b82f6;
   color: white;
+  padding: 0.5rem 1.25rem;
   border: none;
   border-radius: 6px;
-  margin-top: 20px;
+  font-size: 0.875rem;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: background 0.2s;
 }
 
 .refresh-btn:hover {
-  background: #2980b9;
+  background: #2563eb;
 }
 
+/* Animations */
 @keyframes pulse {
-  0% { opacity: 0.6; }
-  50% { opacity: 1; }
-  100% { opacity: 0.6; }
+  0%, 100% { opacity: 0.6; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 480px) {
+  .student-view {
+    padding: 1rem;
+  }
+  
+  .options-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .option-btn {
+    padding: 1rem;
+  }
 }
