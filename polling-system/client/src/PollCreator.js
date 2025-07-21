@@ -18,17 +18,17 @@ function PollCreator({ onCreatePoll }) {
     setOptions(newOptions);
   };
 
-  const submitPoll = () => {
-    if (!question.trim()) {
-      alert('Please enter a question!');
-      return;
-    }
-    onCreatePoll({
-      question,
-      timeLimit,
-      options: options.filter(opt => opt.text.trim()),
-    });
-  };
+const submitPoll = () => {
+  if (!question.trim()) {
+    alert('Please enter a question!');
+    return;
+  }
+  onCreatePoll({
+    question,
+    timeLimit,
+    options: options.map(opt => opt.text).filter(text => text.trim()), // Fix: Extract only text
+  });
+};
 
   return (
     <div className="poll-creator">
