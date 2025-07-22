@@ -30,6 +30,7 @@ let activePoll = null;
 let results = {};
 let teacherSocket = null;
 const connectedStudents = new Map(); // socket.id -> student name
+const answeredStudents = new Set(); // socket.id of students who answered
 const chatMessages = [];
 
 // Helper functions
@@ -55,6 +56,11 @@ const broadcastChatMessage = (message) => {
   chatMessages.push(message);
 };
 
+const checkAllStudentsAnswered = () => {
+  return connectedStudents.size > 0 && 
+         answeredStudents.size === connectedStudents.size;
+};
+
 // Socket.io connection handler
 io.on('connection', (socket) => {
   console.log(`New connection: ${socket.id}`);
@@ -76,6 +82,10 @@ io.on('connection', (socket) => {
         if (activePoll) {
           socket.emit('poll-created', activePoll);
           socket.emit('results-updated', calculatePercentages());
+          socket.emit('answers-status', {
+            answered: answeredStudents.size,
+            total: connectedStudents.size
+          });
         }
         socket.emit('chat-history', chatMessages);
         socket.emit('student-list-updated', Array.from(connectedStudents.values()));
@@ -156,70 +166,74 @@ io.on('connection', (socket) => {
   });
 
   // Teacher creates a poll
-  socket.on('create-poll', (poll, callback) => {
-    try {
-      if (!socket.isTeacher || socket.id !== teacherSocket) {
-        console.warn(`Unauthorized poll creation attempt from ${socket.id}`);
-        if (typeof callback === 'function') {
-          callback({ error: 'Unauthorized' });
-        }
-        return;
-      }
+  // Modify the create-poll handler
+socket.on('create-poll', (poll, callback) => {
+  try {
+    // Authorization check
+    if (!socket.isTeacher || socket.id !== teacherSocket) {
+      console.warn(`Unauthorized poll creation attempt from ${socket.id}`);
+      return callback?.({ error: 'Unauthorized' });
+    }
 
-      // Validation
-      if (!poll?.question || !Array.isArray(poll.options) || poll.options.length < 2) {
-        const error = 'Invalid poll data: question and at least 2 options required';
-        console.warn(error);
-        if (typeof callback === 'function') {
-          callback({ error });
-        }
-        return;
-      }
+    // Check if there's an active poll and not all students have answered
+    if (activePoll && answeredStudents.size < connectedStudents.size) {
+      return callback?.({ 
+        error: 'Cannot create new poll - current poll still active with unanswered students',
+        status: 'pending',
+        answered: answeredStudents.size,
+        total: connectedStudents.size
+      });
+    }
 
-      // Create new poll
-      activePoll = {
-        question: poll.question.trim(),
-        options: poll.options
+    // Clear previous poll data
+    answeredStudents.clear();
+    results = {};
+
+    // Validation
+    if (!poll?.question || !Array.isArray(poll.options) || poll.options.length < 2) {
+      const error = 'Invalid poll data: question and at least 2 options required';
+      console.warn(error);
+      return callback?.({ error });
+    }
+
+    // Create new poll
+    activePoll = {
+      question: poll.question.trim(),
+      options: poll.options
+        .filter(opt => typeof opt === 'string')
+        .map(opt => opt.trim())
+        .filter(opt => opt.length > 0),
+      correctAnswers: Array.isArray(poll.correctAnswers) 
+        ? poll.correctAnswers
           .filter(opt => typeof opt === 'string')
           .map(opt => opt.trim())
-          .filter(opt => opt.length > 0),
-        correctAnswers: Array.isArray(poll.correctAnswers) 
-          ? poll.correctAnswers
-            .filter(opt => typeof opt === 'string')
-            .map(opt => opt.trim())
-            .filter(opt => opt.length > 0)
-          : [],
-        timeLimit: Math.min(Number(poll.timeLimit || 60), MAX_POLL_DURATION),
-        createdAt: Date.now()
-      };
-      
-      results = {};
-      console.log('New poll created:', activePoll);
-      
-      // Broadcast to all clients
-      io.emit('poll-created', activePoll);
-      
-      if (typeof callback === 'function') {
-        callback({ status: 'success', poll: activePoll });
-      }
+          .filter(opt => opt.length > 0)
+        : [],
+      timeLimit: Math.min(Number(poll.timeLimit || 60), MAX_POLL_DURATION),
+      createdAt: Date.now()
+    };
+    
+    console.log('New poll created:', activePoll);
+    
+    // Broadcast to all clients
+    io.emit('poll-created', activePoll);
+    callback?.({ status: 'success', poll: activePoll });
 
-      // Auto-end poll after timeout
-      if (activePoll.timeLimit > 0) {
-        setTimeout(() => {
-          if (activePoll) {
-            console.log('Poll timeout reached');
-            io.emit('poll-ended');
-            activePoll = null;
-          }
-        }, activePoll.timeLimit * 1000);
-      }
-    } catch (error) {
-      console.error('Error in poll creation:', error);
-      if (typeof callback === 'function') {
-        callback({ error: 'Poll creation failed' });
-      }
+    // Auto-end timer
+    if (activePoll.timeLimit > 0) {
+      setTimeout(() => {
+        if (activePoll) {
+          console.log('Poll timeout reached');
+          io.emit('poll-ended');
+          activePoll = null;
+        }
+      }, activePoll.timeLimit * 1000);
     }
-  });
+  } catch (error) {
+    console.error('Error in poll creation:', error);
+    callback?.({ error: 'Poll creation failed' });
+  }
+});
 
   // Student submits answer
   socket.on('submit-answer', ({ answer, studentName, pollId }, callback) => {
@@ -227,20 +241,17 @@ io.on('connection', (socket) => {
       if (!activePoll || activePoll.question !== pollId) {
         const error = 'No active poll or poll ID mismatch';
         console.warn(`${error} from ${socket.id}`);
-        if (typeof callback === 'function') {
-          callback({ error });
-        }
-        return;
+        return callback?.({ error });
       }
 
       if (!activePoll.options.includes(answer)) {
         const error = `Invalid answer "${answer}" from ${socket.id}`;
         console.warn(error);
-        if (typeof callback === 'function') {
-          callback({ error: 'Invalid answer' });
-        }
-        return;
+        return callback?.({ error: 'Invalid answer' });
       }
+
+      // Track that this student has answered
+      answeredStudents.add(socket.id);
 
       // Update results
       results[answer] = (results[answer] || 0) + 1;
@@ -254,6 +265,19 @@ io.on('connection', (socket) => {
       
       // Broadcast updated results
       io.emit('results-updated', percentages);
+
+      // Notify teacher about answer status
+      if (socket.isTeacher || teacherSocket) {
+        io.to(teacherSocket).emit('answers-status', {
+          answered: answeredStudents.size,
+          total: connectedStudents.size
+        });
+      }
+
+      // Check if all students have answered
+      if (checkAllStudentsAnswered()) {
+        io.emit('all-students-answered');
+      }
       
       if (typeof callback === 'function') {
         callback({ 
@@ -275,16 +299,14 @@ io.on('connection', (socket) => {
       if (!socket.isTeacher || socket.id !== teacherSocket) {
         const error = 'Unauthorized poll end attempt';
         console.warn(`${error} from ${socket.id}`);
-        if (typeof callback === 'function') {
-          callback({ error });
-        }
-        return;
+        return callback?.({ error });
       }
 
       if (activePoll) {
         console.log('Teacher ended poll manually');
         io.emit('poll-ended');
         activePoll = null;
+        answeredStudents.clear();
         if (typeof callback === 'function') {
           callback({ status: 'success' });
         }
@@ -355,6 +377,9 @@ io.on('connection', (socket) => {
       }
       
       if (studentSocketId) {
+        // Remove from answered students if they had answered
+        answeredStudents.delete(studentSocketId);
+        
         // Notify student before disconnecting
         io.to(studentSocketId).emit('you-were-kicked');
         io.sockets.sockets.get(studentSocketId)?.disconnect();
@@ -366,6 +391,14 @@ io.on('connection', (socket) => {
           timestamp: new Date().toISOString(),
           isSystem: true
         });
+
+        // Update answer status if there's an active poll
+        if (activePoll && teacherSocket) {
+          io.to(teacherSocket).emit('answers-status', {
+            answered: answeredStudents.size,
+            total: connectedStudents.size
+          });
+        }
       }
     } catch (error) {
       console.error('Error in kicking student:', error);
@@ -380,6 +413,7 @@ io.on('connection', (socket) => {
       const studentName = connectedStudents.get(socket.id);
       if (studentName) {
         connectedStudents.delete(socket.id);
+        answeredStudents.delete(socket.id);
         console.log(`Student disconnected: ${studentName}`);
         broadcastStudentList();
         broadcastChatMessage({
@@ -388,6 +422,14 @@ io.on('connection', (socket) => {
           timestamp: new Date().toISOString(),
           isSystem: true
         });
+
+        // Update answer status if there's an active poll
+        if (activePoll && teacherSocket) {
+          io.to(teacherSocket).emit('answers-status', {
+            answered: answeredStudents.size,
+            total: connectedStudents.size
+          });
+        }
       }
       
       if (socket.id === teacherSocket) {
@@ -403,6 +445,13 @@ io.on('connection', (socket) => {
   if (activePoll) {
     socket.emit('poll-created', activePoll);
     socket.emit('results-updated', calculatePercentages());
+    
+    if (socket.id === teacherSocket) {
+      socket.emit('answers-status', {
+        answered: answeredStudents.size,
+        total: connectedStudents.size
+      });
+    }
   }
   
   if (connectedStudents.has(socket.id)) {
@@ -421,7 +470,8 @@ app.get('/health', (req, res) => {
     connections: io.engine.clientsCount,
     teacherConnected: !!teacherSocket,
     studentsConnected: connectedStudents.size,
-    chatMessages: chatMessages.length
+    chatMessages: chatMessages.length,
+    answeredStudents: answeredStudents.size
   });
 });
 

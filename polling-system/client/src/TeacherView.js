@@ -17,6 +17,11 @@ function TeacherView() {
   const [results, setResults] = useState({});
   const [students, setStudents] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [canCreateNewPoll, setCanCreateNewPoll] = useState(true);
+  const [answerStatus, setAnswerStatus] = useState({
+    answered: 0,
+    total: 0
+  });
   
   // Chat and participants state
   const [activeTab, setActiveTab] = useState('results');
@@ -35,12 +40,19 @@ function TeacherView() {
       }
     });
 
+    socket.on('poll-created', (newPoll) => {
+      setActivePoll(newPoll);
+      setResults({});
+      setCanCreateNewPoll(false);
+    });
+
     socket.on('results-updated', (newResults) => {
       setResults(newResults);
     });
 
     socket.on('student-joined', (studentName) => {
       setStudents(prev => [...prev, studentName]);
+      setAnswerStatus(prev => ({ ...prev, total: prev.total + 1 }));
     });
 
     socket.on('student-message', (message) => {
@@ -49,13 +61,36 @@ function TeacherView() {
 
     socket.on('student-kicked', (studentName) => {
       setStudents(prev => prev.filter(name => name !== studentName));
+      setAnswerStatus(prev => ({
+        answered: Math.max(0, prev.answered - 1),
+        total: Math.max(0, prev.total - 1)
+      }));
+    });
+
+    socket.on('all-students-answered', () => {
+      setCanCreateNewPoll(true);
+    });
+
+    socket.on('poll-ended', () => {
+      setActivePoll(null);
+      setCanCreateNewPoll(true);
+      setAnswerStatus({ answered: 0, total: students.length });
+    });
+
+    socket.on('answers-status', (status) => {
+      setAnswerStatus(status);
+      setCanCreateNewPoll(status.answered === status.total);
     });
 
     return () => {
+      socket.off('poll-created');
       socket.off('results-updated');
       socket.off('student-joined');
       socket.off('student-message');
       socket.off('student-kicked');
+      socket.off('all-students-answered');
+      socket.off('poll-ended');
+      socket.off('answers-status');
     };
   }, []);
 
@@ -63,9 +98,6 @@ function TeacherView() {
     socket.emit('end-poll', (response) => {
       if (response?.error) {
         alert('Failed to end poll: ' + response.error);
-      } else {
-        setActivePoll(null);
-        setResults({});
       }
     });
   };
@@ -93,6 +125,11 @@ function TeacherView() {
       return;
     }
 
+    if (!canCreateNewPoll) {
+      alert(`Cannot create new poll - ${answerStatus.answered}/${answerStatus.total} students have answered`);
+      return;
+    }
+
     const allOptions = options
       .filter(opt => opt.text.trim())
       .map(opt => opt.text);
@@ -114,13 +151,15 @@ function TeacherView() {
 
     socket.emit('create-poll', newPoll, (response) => {
       if (response?.error) {
-        console.error('Poll creation failed:', response.error);
         alert('Failed to create poll: ' + response.error);
       } else {
-        setActivePoll(newPoll);
-        setResults({});
-        setStudents([]);
-        setMessages([]);
+        // Reset form after successful creation
+        setQuestion('');
+        setTimeLimit(60);
+        setOptions([
+          { id: 1, text: 'Yes', checked: false },
+          { id: 2, text: 'No', checked: false }
+        ]);
       }
     });
   };
@@ -141,7 +180,6 @@ function TeacherView() {
   const kickStudent = (studentName) => {
     if (window.confirm(`Are you sure you want to kick ${studentName}?`)) {
       socket.emit('kick-student', studentName);
-      setStudents(students.filter(name => name !== studentName));
     }
   };
 
@@ -289,8 +327,13 @@ function TeacherView() {
             <div className="poll-header">
               <h1>Live Poll Results</h1>
               <h2>{activePoll.question}</h2>
-              <div className="time-info">
-                ⏱️ {activePoll.timeLimit}s poll duration
+              <div className="poll-status">
+                <div className="time-info">
+                  ⏱️ {activePoll.timeLimit}s poll duration
+                </div>
+                <div className="answer-status">
+                  {answerStatus.answered}/{answerStatus.total} students answered
+                </div>
               </div>
             </div>
 
