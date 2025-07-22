@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
-// import './StudentView.css';
 
 const socket = io('http://localhost:4000', {
   reconnection: true,
@@ -22,6 +21,10 @@ function StudentView() {
   const [submissionState, setSubmissionState] = useState({
     isCorrect: null,
     submittedOption: null
+  });
+  const [participationStatus, setParticipationStatus] = useState({
+    answered: 0,
+    total: 0
   });
   const timerRef = useRef(null);
 
@@ -85,10 +88,15 @@ function StudentView() {
       setResults(newResults);
     };
 
+    const handleParticipationUpdate = (status) => {
+      setParticipationStatus(status);
+    };
+
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
     socket.on('poll-created', handlePollCreated);
     socket.on('results-updated', handleResultsUpdated);
+    socket.on('participation-update', handleParticipationUpdate);
 
     connectToSocket();
 
@@ -97,6 +105,7 @@ function StudentView() {
       socket.off('disconnect', handleDisconnect);
       socket.off('poll-created', handlePollCreated);
       socket.off('results-updated', handleResultsUpdated);
+      socket.off('participation-update', handleParticipationUpdate);
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [nameSubmitted, name]);
@@ -123,11 +132,13 @@ function StudentView() {
       studentName: name,
       pollId: poll.question,
       isCorrect
+    }, (response) => {
+      if (response?.status === 'success') {
+        setHasSubmitted(true);
+        if (timerRef.current) clearInterval(timerRef.current);
+        setTimeLeft(0);
+      }
     });
-    
-    setHasSubmitted(true);
-    if (timerRef.current) clearInterval(timerRef.current);
-    setTimeLeft(0);
   };
 
   const handleNewTab = () => {
@@ -174,6 +185,11 @@ function StudentView() {
             <h2 className="poll-question">{poll.question}</h2>
             <div className="time-left">
               ⏱️ {timeLeft > 0 ? `${timeLeft}s remaining` : 'Time expired'}
+              {timeLeft <= 0 && (
+                <span className="participation-status">
+                  ({participationStatus.answered}/{participationStatus.total} students answered)
+                </span>
+              )}
             </div>
 
             <div className="options-grid">
@@ -224,6 +240,9 @@ function StudentView() {
           {(Object.keys(results).length > 0 || timeLeft <= 0) && (
             <div className="results-container">
               <h3>Live Results</h3>
+              <div className="participation-summary">
+                {participationStatus.answered} of {participationStatus.total} students have answered
+              </div>
               <div className="results-grid">
                 {poll.options.map((option, index) => (
                   <div key={index} className="result-item">

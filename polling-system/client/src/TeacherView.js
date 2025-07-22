@@ -44,6 +44,8 @@ function TeacherView() {
       setActivePoll(newPoll);
       setResults({});
       setCanCreateNewPoll(false);
+      // Reset answer status when new poll is created
+      setAnswerStatus(prev => ({ ...prev, answered: 0 }));
     });
 
     socket.on('results-updated', (newResults) => {
@@ -52,7 +54,10 @@ function TeacherView() {
 
     socket.on('student-joined', (studentName) => {
       setStudents(prev => [...prev, studentName]);
-      setAnswerStatus(prev => ({ ...prev, total: prev.total + 1 }));
+      setAnswerStatus(prev => ({ 
+        ...prev, 
+        total: prev.total + 1 
+      }));
     });
 
     socket.on('student-message', (message) => {
@@ -74,7 +79,10 @@ function TeacherView() {
     socket.on('poll-ended', () => {
       setActivePoll(null);
       setCanCreateNewPoll(true);
-      setAnswerStatus({ answered: 0, total: students.length });
+      setAnswerStatus(prev => ({ 
+        answered: 0, 
+        total: prev.total 
+      }));
     });
 
     socket.on('answers-status', (status) => {
@@ -317,9 +325,11 @@ function TeacherView() {
             <button 
               className="submit-btn" 
               onClick={createPoll}
-              disabled={!question.trim() || options.filter(opt => opt.text.trim()).length < 2}
+              disabled={!canCreateNewPoll || !question.trim() || options.filter(opt => opt.text.trim()).length < 2}
             >
-              Create Poll
+              {!canCreateNewPoll ? 
+                `${answerStatus.answered}/${answerStatus.total} students answered` : 
+                'Create Poll'}
             </button>
           </div>
         ) : (
@@ -333,6 +343,12 @@ function TeacherView() {
                 </div>
                 <div className="answer-status">
                   {answerStatus.answered}/{answerStatus.total} students answered
+                </div>
+                <div className="progress-bar">
+                  <div 
+                    className="progress-fill"
+                    style={{ width: `${(answerStatus.answered / answerStatus.total) * 100}%` }}
+                  ></div>
                 </div>
               </div>
             </div>
