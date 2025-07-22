@@ -132,19 +132,22 @@ button:hover {
 
 .add-option {
   background: none;
-  border: none;
-  color: #3b82f6;
+  border: solid 1px green;
+  color: #057217;
   cursor: pointer;
   font-size: 0.9rem;
   margin-top: 0.5rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0;
+  padding: 4px;
 }
 
 .add-option:hover {
   text-decoration: underline;
+  background-color: rgb(209, 247, 216);
+  transition: all 0.2s;
+  text-decoration: none;
 }
 
 .submit-btn {

@@ -12,10 +12,7 @@ function TeacherView() {
   // Poll creation state
   const [question, setQuestion] = useState('');
   const [timeLimit, setTimeLimit] = useState(60);
-  const [options, setOptions] = useState([
-    { id: 1, text: 'Yes', checked: false },
-    { id: 2, text: 'No', checked: false }
-  ]);
+  const [options, setOptions] = useState([]); // Start with empty options
 
   // Poll management state
   const [activePoll, setActivePoll] = useState(null);
@@ -61,6 +58,59 @@ function TeacherView() {
       setConnectionStatus('disconnected');
     };
 
+    const handlePollCreated = (newPoll) => {
+      setActivePoll(newPoll);
+      setResults({});
+      setCanCreateNewPoll(false);
+      setAnswerStatus(prev => ({ ...prev, answered: 0 }));
+    };
+
+    const handleResultsUpdated = (newResults) => {
+      setResults(newResults);
+    };
+
+    const handleStudentListUpdated = (studentList) => {
+      setStudents(studentList);
+      setAnswerStatus(prev => ({ ...prev, total: studentList.length }));
+    };
+
+    const handleChatMessage = (message) => {
+      setMessages(prev => [...prev, message]);
+    };
+
+    const handleChatHistory = (history) => {
+      setMessages(history || []);
+    };
+
+    const handleAllStudentsAnswered = () => {
+      setCanCreateNewPoll(true);
+    };
+
+    const handlePollEnded = () => {
+      setActivePoll(null);
+      setCanCreateNewPoll(true);
+      setAnswerStatus(prev => ({ answered: 0, total: prev.total }));
+    };
+
+    const handleAnswersStatus = (status) => {
+      setAnswerStatus(status);
+      setCanCreateNewPoll(status.answered === status.total);
+    };
+
+    const handleTeacherStateUpdate = (state) => {
+      if (state.activePoll) {
+        setActivePoll(state.activePoll);
+        setResults(state.results);
+        setAnswerStatus({
+          answered: state.participation.answered,
+          total: state.participation.total
+        });
+        setCanCreateNewPoll(state.participation.answered === state.participation.total);
+      }
+      setMessages(state.chatHistory || []);
+      setStudents(state.students || []);
+    };
+
     connectToSocket();
 
     socket.on('connect', handleConnect);
@@ -94,60 +144,6 @@ function TeacherView() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  // Event handlers
-  const handlePollCreated = (newPoll) => {
-    setActivePoll(newPoll);
-    setResults({});
-    setCanCreateNewPoll(false);
-    setAnswerStatus(prev => ({ ...prev, answered: 0 }));
-  };
-
-  const handleResultsUpdated = (newResults) => {
-    setResults(newResults);
-  };
-
-  const handleStudentListUpdated = (studentList) => {
-    setStudents(studentList);
-    setAnswerStatus(prev => ({ ...prev, total: studentList.length }));
-  };
-
-  const handleChatMessage = (message) => {
-    setMessages(prev => [...prev, message]);
-  };
-
-  const handleChatHistory = (history) => {
-    setMessages(history || []);
-  };
-
-  const handleAllStudentsAnswered = () => {
-    setCanCreateNewPoll(true);
-  };
-
-  const handlePollEnded = () => {
-    setActivePoll(null);
-    setCanCreateNewPoll(true);
-    setAnswerStatus(prev => ({ answered: 0, total: prev.total }));
-  };
-
-  const handleAnswersStatus = (status) => {
-    setAnswerStatus(status);
-    setCanCreateNewPoll(status.answered === status.total);
-  };
-
-  const handleTeacherStateUpdate = (state) => {
-    if (state.activePoll) {
-      setActivePoll(state.activePoll);
-      setResults(state.results);
-      setAnswerStatus({
-        answered: state.participation.answered,
-        total: state.participation.total
-      });
-      setCanCreateNewPoll(state.participation.answered === state.participation.total);
-    }
-    setMessages(state.chatHistory || []);
-    setStudents(state.students || []);
-  };
 
   const createPoll = () => {
     if (!isAuthenticated) {
@@ -185,10 +181,7 @@ function TeacherView() {
       } else {
         setQuestion('');
         setTimeLimit(60);
-        setOptions([
-          { id: 1, text: 'Yes', checked: false },
-          { id: 2, text: 'No', checked: false }
-        ]);
+        setOptions([]); // Reset to empty options after poll creation
       }
     });
   };
@@ -216,6 +209,10 @@ function TeacherView() {
     setOptions(options.map(opt =>
       opt.id === id ? { ...opt, checked: !opt.checked } : opt
     ));
+  };
+
+  const removeOption = (id) => {
+    setOptions(options.filter(opt => opt.id !== id));
   };
 
   const sendMessage = () => {
@@ -326,7 +323,7 @@ function TeacherView() {
 
         {activeTab === 'participants' && (
           <div className="participants-list">
-            {/* <h3>Connected Students ({students.length})</h3> */}
+            <h3>Connected Students ({students.length})</h3>
             {students.length === 0 ? (
               <p className="no-students">No students connected</p>
             ) : (
@@ -339,7 +336,7 @@ function TeacherView() {
                       onClick={() => kickStudent(student)}
                       title="Remove student"
                     >
-                      block
+                      ×
                     </button>
                   </li>
                 ))}
@@ -348,8 +345,7 @@ function TeacherView() {
           </div>
         )}
       </div>
-
-
+      
       {/* Main Content */}
       <div className={`main-content ${isMenuOpen ? 'menu-open' : ''}`}>
         {!activePoll ? (
@@ -373,7 +369,7 @@ function TeacherView() {
               <input
                 type="number"
                 value={timeLimit}
-                onChange={(e) => setTimeLimit(Math.max(10, Math.min(300, e.target.value)))}
+                onChange={(e) => setTimeLimit(Math.max(10, Math.min(300, Number(e.target.value))))}
                 min="10"
                 max="300"
               />
@@ -381,6 +377,9 @@ function TeacherView() {
 
             <div className="options-editor">
               <label>Poll Options (check correct answers)</label>
+              {options.length === 0 && (
+                <p className="no-options">No options added yet. Click "Add Option" below.</p>
+              )}
               {options.map(option => (
                 <div key={option.id} className="option-item">
                   <input
@@ -395,14 +394,12 @@ function TeacherView() {
                     onChange={(e) => updateOption(option.id, e.target.value)}
                     placeholder="Option text"
                   />
-                  {options.length > 2 && (
-                    <button
-                      className="remove-option"
-                      onClick={() => setOptions(options.filter(opt => opt.id !== option.id))}
-                    >
-                      ×
-                    </button>
-                  )}
+                  <button
+                    className="remove-option"
+                    onClick={() => removeOption(option.id)}
+                  >
+                    ×
+                  </button>
                 </div>
               ))}
               <button className="add-option" onClick={addOption}>
