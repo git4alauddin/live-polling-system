@@ -769,7 +769,7 @@ button:hover {
 }
 
 .message-input button {
-  margin-left: 10px;
+  margin-left: -9px;
   padding: 8px 15px;
   background: #4CAF50;
   color: white;
@@ -1187,4 +1187,101 @@ button:hover {
   .result-bar {
     min-width: 50px;
   }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Chat styles */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 120px);
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    background-color: #f9f9f9;
+}
+
+.message {
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    max-width: 70%;
+    word-wrap: break-word;
+}
+
+.message.own {
+    margin-left: auto;
+    background-color: #e3f2fd;
+    border: 1px solid #bbdefb;
+}
+
+.message.teacher {
+    background-color: #e8f5e9;
+    border: 1px solid #c8e6c9;
+}
+
+.message.other {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    font-size: 0.9em;
+}
+
+.timestamp {
+    color: #757575;
+    font-size: 0.8em;
+}
+
+.message-input {
+    display: flex;
+    padding: 10px;
+    background-color: #fff;
+    border-top: 1px solid #ddd;
+}
+
+.message-input input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-right: 8px;
+}
+
+/* View toggles */
+.view-toggle {
+    padding: 6px 12px;
+    margin: 0 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #555;
+}
+
+.view-toggle.active {
+    color: #1976d2;
+    font-weight: bold;
+    border-bottom: 2px solid #1976d2;
 }
