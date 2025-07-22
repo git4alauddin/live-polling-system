@@ -63,7 +63,7 @@ button:hover {
   background: white;
   padding: 2rem;
   border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   margin-bottom: 1rem;
 }
 
@@ -171,7 +171,7 @@ button:hover {
   background: white;
   padding: 2rem;
   border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   margin-bottom: 1rem;
 }
 
@@ -293,7 +293,7 @@ button:hover {
   border-radius: 50%;
   font-size: 24px;
   cursor: pointer;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -311,7 +311,7 @@ button:hover {
   width: 350px;
   max-height: 60vh;
   background: white;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   border-radius: 12px;
   transition: all 0.3s ease;
   z-index: 90;
@@ -400,8 +400,15 @@ button:hover {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .message.teacher {
@@ -545,12 +552,12 @@ button:hover {
   .teacher-view {
     padding: 1rem;
   }
-  
+
   .poll-creator,
   .poll-results {
     padding: 1.5rem;
   }
-  
+
   .option-item {
     flex-direction: column;
     align-items: flex-start;
@@ -669,7 +676,7 @@ button:hover {
   border-radius: 50%;
   font-size: 20px;
   cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .side-menu {
@@ -679,7 +686,7 @@ button:hover {
   width: 300px;
   height: 100%;
   background: white;
-  box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
   transition: right 0.3s ease;
   z-index: 90;
   display: flex;
@@ -831,7 +838,7 @@ button:hover {
   padding: 1rem;
   background: white;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .student-name {
@@ -862,7 +869,7 @@ button:hover {
   padding: 2rem;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
 
@@ -918,7 +925,7 @@ button:hover {
   background: white;
   padding: 1.5rem;
   border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   margin-bottom: 1.5rem;
 }
 
@@ -967,7 +974,7 @@ button:hover {
   border-color: #4CAF50;
   background: #f8fafc;
   transform: translateY(-2px);
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .option-btn.selected {
@@ -1043,7 +1050,7 @@ button:hover {
   background: white;
   padding: 1.5rem;
   border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   margin-top: 1.5rem;
 }
 
@@ -1104,7 +1111,7 @@ button:hover {
   color: white;
   font-size: 0.75rem;
   font-weight: 600;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
   position: relative;
   z-index: 2;
 }
@@ -1119,7 +1126,7 @@ button:hover {
   padding: 2rem;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .connection-status {
@@ -1148,8 +1155,15 @@ button:hover {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 /* Responsive Adjustments */
@@ -1157,14 +1171,15 @@ button:hover {
   .options-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .student-header {
     flex-direction: column;
     gap: 0.5rem;
     align-items: flex-start;
   }
-  
-  .student-name, .new-tab-btn {
+
+  .student-name,
+  .new-tab-btn {
     width: 100%;
     text-align: center;
   }
@@ -1173,5 +1188,3 @@ button:hover {
     min-width: 50px;
   }
 }
-
-
