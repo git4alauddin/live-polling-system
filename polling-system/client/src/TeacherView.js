@@ -326,7 +326,7 @@ function TeacherView() {
 
         {activeTab === 'participants' && (
           <div className="participants-list">
-            <h3>Connected Students ({students.length})</h3>
+            {/* <h3>Connected Students ({students.length})</h3> */}
             {students.length === 0 ? (
               <p className="no-students">No students connected</p>
             ) : (
@@ -339,7 +339,7 @@ function TeacherView() {
                       onClick={() => kickStudent(student)}
                       title="Remove student"
                     >
-                      ×
+                      block
                     </button>
                   </li>
                 ))}
