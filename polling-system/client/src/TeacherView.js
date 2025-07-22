@@ -398,7 +398,7 @@ function TeacherView() {
                     className="remove-option"
                     onClick={() => removeOption(option.id)}
                   >
-                    ×
+                    ✘
                   </button>
                 </div>
               ))}

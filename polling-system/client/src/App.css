@@ -169,6 +169,21 @@ button:hover {
   transform: translateY(-1px);
 }
 
+.remove-option {
+    padding: 5px 10px;
+    font-size: 15px;
+    cursor: pointer;
+    background: #e66060;
+    color: white;
+    border: none;
+    border-radius: 11px;
+}
+
+.remove-option:hover {
+  background: #dc2626;
+  transition: all 0.2s;
+}
+
 /* ----- Results View ----- */
 .poll-results {
   background: white;
