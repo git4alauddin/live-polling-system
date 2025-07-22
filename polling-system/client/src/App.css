@@ -350,20 +350,26 @@ button:hover {
   margin: 0 auto;
   padding: 1rem;
   font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #f8fafc;
+  min-height: 100vh;
 }
 
+/* Header Styles */
 .student-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .student-name {
   font-weight: 600;
   color: #1e293b;
+  font-size: 1.1rem;
 }
 
 .new-tab-btn {
@@ -381,7 +387,7 @@ button:hover {
   background: #e2e8f0;
 }
 
-/* Name Prompt */
+/* Name Prompt Styles */
 .name-prompt {
   max-width: 400px;
   margin: 3rem auto;
@@ -395,6 +401,7 @@ button:hover {
 .name-prompt h2 {
   color: #1e293b;
   margin-bottom: 1.5rem;
+  font-size: 1.5rem;
 }
 
 .name-prompt form {
@@ -409,6 +416,12 @@ button:hover {
   border-radius: 8px;
   font-size: 1rem;
   text-align: center;
+  transition: border-color 0.2s;
+}
+
+.name-prompt input:focus {
+  outline: none;
+  border-color: #4CAF50;
 }
 
 .name-prompt button {
@@ -418,8 +431,13 @@ button:hover {
   padding: 0.75rem;
   border-radius: 8px;
   font-size: 1rem;
+  font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;
+}
+
+.name-prompt button:hover:not(:disabled) {
+  background: #3e8e41;
 }
 
 .name-prompt button:disabled {
@@ -427,7 +445,7 @@ button:hover {
   cursor: not-allowed;
 }
 
-/* Poll Container */
+/* Poll Container Styles */
 .poll-container {
   background: white;
   padding: 1.5rem;
@@ -441,6 +459,7 @@ button:hover {
   margin: 0 0 1rem 0;
   font-size: 1.25rem;
   line-height: 1.4;
+  text-align: center;
 }
 
 .time-left {
@@ -448,6 +467,7 @@ button:hover {
   font-weight: 600;
   margin-bottom: 1.5rem;
   font-size: 0.875rem;
+  text-align: center;
 }
 
 .options-grid {
@@ -457,10 +477,7 @@ button:hover {
   margin: 1.5rem 0;
 }
 
-
-
-/* ----------------student view ----------------- */
-
+/* Option Button Styles */
 .option-btn {
   padding: 1.25rem 0.5rem;
   background: white;
@@ -469,13 +486,13 @@ button:hover {
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.2s;
-  color: #1e293b; /* Dark text for better contrast */
+  color: #1e293b;
   font-weight: 500;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 60px; /* Ensure consistent height */
+  min-height: 60px;
 }
 
 .option-btn:hover:not(:disabled) {
@@ -486,54 +503,49 @@ button:hover {
 }
 
 .option-btn.selected {
-  border-color: #4CAF50;
-  background: #f0fdf4;
-  color: #166534;
-  box-shadow: 0 0 0 2px #dcfce7;
+  border-color: #3b82f6;
+  background: #eff6ff;
+  color: #1e40af;
 }
 
 .option-btn:disabled {
-  opacity: 0.7;
+  opacity: 0.8;
   cursor: not-allowed;
+}
+
+.option-btn.correct {
+  border-color: #10b981;
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.option-btn.incorrect {
+  border-color: #ef4444;
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 .option-text {
   z-index: 1;
   padding: 0 1rem;
+  text-align: center;
 }
 
-.check-mark {
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  color: #4CAF50;
+.correct-indicator {
+  color: #10b981;
   font-weight: bold;
-  font-size: 1.2rem;
+  margin-left: 0.5rem;
+  font-size: 0.9rem;
 }
 
-/* For better text contrast on all backgrounds */
-.option-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: white;
-  opacity: 0.9;
-  z-index: 0;
-  border-radius: 8px;
+.incorrect-indicator {
+  color: #ef4444;
+  font-weight: bold;
+  margin-left: 0.5rem;
+  font-size: 0.9rem;
 }
 
-.option-btn.selected::before {
-  background: #f0fdf4;
-}
-
-.option-btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
+/* Submit Button */
 .submit-btn {
   background: #4CAF50;
   color: white;
@@ -544,11 +556,13 @@ button:hover {
   font-weight: 500;
   cursor: pointer;
   width: 100%;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  margin-top: 1rem;
 }
 
 .submit-btn:hover:not(:disabled) {
   background: #3e8e41;
+  transform: translateY(-1px);
 }
 
 .submit-btn:disabled {
@@ -556,36 +570,49 @@ button:hover {
   cursor: not-allowed;
 }
 
-/* Results */
+/* Results Container - Fixed Percentage Visibility */
 .results-container {
   background: white;
   padding: 1.5rem;
   border-radius: 12px;
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  margin-top: 1.5rem;
 }
 
 .results-container h3 {
-  margin-top: 0;
-  margin-bottom: 1rem;
   color: #1e293b;
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+  text-align: center;
 }
 
 .results-grid {
   display: grid;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .result-item {
-  display: grid;
-  gap: 0.5rem;
+  background: white;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
 }
 
 .option-label {
-  font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.correct-tag {
+  color: #10b981;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-left: 0.5rem;
 }
 
 .result-bar-container {
-  height: 1.25rem;
+  height: 1.5rem;
   background: #f1f5f9;
   border-radius: 999px;
   position: relative;
@@ -597,17 +624,25 @@ button:hover {
   background: linear-gradient(90deg, #4CAF50, #22c55e);
   border-radius: 999px;
   transition: width 0.6s ease-out;
+  position: relative;
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 0.5rem;
 }
 
 .percentage {
-  position: absolute;
-  right: 0.5rem;
-  top: 50%;
-  transform: translateY(-50%);
   color: white;
   font-size: 0.75rem;
   font-weight: 600;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  position: relative;
+  z-index: 2;
+}
+
+.incorrect-answer .result-bar {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
 }
 
 /* Waiting Screen */
@@ -624,6 +659,7 @@ button:hover {
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 1rem;
+  justify-content: center;
 }
 
 .status-indicator {
@@ -648,7 +684,7 @@ button:hover {
   50% { opacity: 1; }
 }
 
-/* Responsive */
+/* Responsive Adjustments */
 @media (max-width: 480px) {
   .options-grid {
     grid-template-columns: 1fr;
@@ -659,16 +695,15 @@ button:hover {
     gap: 0.5rem;
     align-items: flex-start;
   }
+  
+  .student-name, .new-tab-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .result-bar {
+    min-width: 50px;
+  }
 }
 
-/* Add to StudentView.css */
-.option-btn.correct {
-  border-color: #10b981;
-  background: #ecfdf5;
-}
 
-.correct-indicator {
-  color: #10b981;
-  font-weight: bold;
-  margin-left: 0.5rem;
-}

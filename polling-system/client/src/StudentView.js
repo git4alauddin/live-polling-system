@@ -10,6 +10,7 @@ const socket = io('http://localhost:4000', {
 });
 
 function StudentView() {
+  // State declarations
   const [name, setName] = useState('');
   const [nameSubmitted, setNameSubmitted] = useState(false);
   const [poll, setPoll] = useState(null);
@@ -17,6 +18,11 @@ function StudentView() {
   const [results, setResults] = useState({});
   const [timeLeft, setTimeLeft] = useState(60);
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [submissionState, setSubmissionState] = useState({
+    isCorrect: null,
+    submittedOption: null
+  });
   const timerRef = useRef(null);
 
   // Initialize from session storage
@@ -50,20 +56,19 @@ function StudentView() {
 
     const handlePollCreated = (newPoll) => {
       console.log('📩 Received new poll:', newPoll);
-      // Ensure poll has correctAnswers array
       const completePoll = {
         ...newPoll,
-        correctAnswers: newPoll.correctAnswers || []
+        correctAnswers: Array.isArray(newPoll.correctAnswers) ? newPoll.correctAnswers : []
       };
       setPoll(completePoll);
       setSelectedOption('');
       setResults({});
+      setHasSubmitted(false);
+      setSubmissionState({ isCorrect: null, submittedOption: null });
       setTimeLeft(Math.min(newPoll.timeLimit || 60, 60));
       
-      // Clear any existing timer
       if (timerRef.current) clearInterval(timerRef.current);
       
-      // Start new timer
       timerRef.current = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
@@ -105,15 +110,22 @@ function StudentView() {
   };
 
   const handleSubmitAnswer = () => {
-    if (!selectedOption || !poll) return;
+    if (!selectedOption || !poll || !poll.correctAnswers) return;
+    
+    const isCorrect = poll.correctAnswers.includes(selectedOption);
+    setSubmissionState({
+      isCorrect,
+      submittedOption: selectedOption
+    });
     
     socket.emit('submit-answer', {
       answer: selectedOption,
       studentName: name,
-      pollId: poll.question
+      pollId: poll.question,
+      isCorrect
     });
     
-    // Clear timer since student has submitted
+    setHasSubmitted(true);
     if (timerRef.current) clearInterval(timerRef.current);
     setTimeLeft(0);
   };
@@ -123,6 +135,7 @@ function StudentView() {
     window.open(window.location.href, '_blank');
   };
 
+  // Render methods
   if (!nameSubmitted) {
     return (
       <div className="name-prompt">
@@ -164,31 +177,47 @@ function StudentView() {
             </div>
 
             <div className="options-grid">
-              {poll.options.map((option, index) => (
-                <button
-                  key={index}
-                  className={`option-btn ${
-                    selectedOption === option ? 'selected' : ''
-                  } ${
-                    timeLeft <= 0 && poll.correctAnswers?.includes(option) ? 'correct' : ''
-                  }`}
-                  onClick={() => timeLeft > 0 && setSelectedOption(option)}
-                  disabled={timeLeft <= 0}
-                >
-                  <span className="option-text">{option}</span>
-                  {timeLeft <= 0 && poll.correctAnswers?.includes(option) && (
-                    <span className="correct-indicator">✓</span>
-                  )}
-                </button>
-              ))}
+              {poll.options.map((option, index) => {
+                const isCorrectAnswer = poll.correctAnswers.includes(option);
+                const isSelected = selectedOption === option;
+                const showResults = timeLeft <= 0 || hasSubmitted;
+                const isSubmittedOption = submissionState.submittedOption === option;
+                
+                let optionClass = 'option-btn';
+                if (isSelected) optionClass += ' selected';
+                if (showResults) {
+                  if (isCorrectAnswer) optionClass += ' correct';
+                  else if (isSubmittedOption && !submissionState.isCorrect) {
+                    optionClass += ' incorrect';
+                  }
+                }
+
+                return (
+                  <button
+                    key={index}
+                    className={optionClass}
+                    onClick={() => !hasSubmitted && timeLeft > 0 && setSelectedOption(option)}
+                    disabled={timeLeft <= 0 || hasSubmitted}
+                  >
+                    <span className="option-text">{option}</span>
+                    {showResults && isCorrectAnswer && (
+                      <span className="correct-indicator">✓ Correct</span>
+                    )}
+                    {showResults && isSubmittedOption && !submissionState.isCorrect && (
+                      <span className="incorrect-indicator">✗ Incorrect</span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             <button
               className="submit-btn"
               onClick={handleSubmitAnswer}
-              disabled={!selectedOption || timeLeft <= 0}
+              disabled={!selectedOption || timeLeft <= 0 || hasSubmitted}
             >
-              {timeLeft <= 0 ? 'Time Expired' : 'Submit Answer'}
+              {hasSubmitted ? 'Answer Submitted' : 
+               timeLeft <= 0 ? 'Time Expired' : 'Submit Answer'}
             </button>
           </div>
 
@@ -200,7 +229,7 @@ function StudentView() {
                   <div key={index} className="result-item">
                     <div className="option-label">
                       {option}
-                      {poll.correctAnswers?.includes(option) && (
+                      {poll.correctAnswers.includes(option) && (
                         <span className="correct-tag"> (Correct)</span>
                       )}
                     </div>
