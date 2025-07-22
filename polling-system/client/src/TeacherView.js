@@ -1,22 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
-// import './TeacherView.css';
 
 const socket = io('http://localhost:4000');
 
 function TeacherView() {
+  // Poll creation state
   const [question, setQuestion] = useState('');
   const [timeLimit, setTimeLimit] = useState(60);
   const [options, setOptions] = useState([
     { id: 1, text: 'Yes', checked: false },
     { id: 2, text: 'No', checked: false }
   ]);
+  
+  // Poll management state
   const [activePoll, setActivePoll] = useState(null);
   const [results, setResults] = useState({});
   const [students, setStudents] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  // Chat and participants state
+  const [activeTab, setActiveTab] = useState('results');
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Teacher authentication on component mount
+  // Teacher authentication
   useEffect(() => {
     socket.emit('identify-teacher', 'teacher123', (response) => {
       if (response.error) {
@@ -35,9 +43,19 @@ function TeacherView() {
       setStudents(prev => [...prev, studentName]);
     });
 
+    socket.on('student-message', (message) => {
+      setMessages(prev => [...prev, message]);
+    });
+
+    socket.on('student-kicked', (studentName) => {
+      setStudents(prev => prev.filter(name => name !== studentName));
+    });
+
     return () => {
       socket.off('results-updated');
       socket.off('student-joined');
+      socket.off('student-message');
+      socket.off('student-kicked');
     };
   }, []);
 
@@ -102,8 +120,29 @@ function TeacherView() {
         setActivePoll(newPoll);
         setResults({});
         setStudents([]);
+        setMessages([]);
       }
     });
+  };
+
+  const sendMessage = () => {
+    if (newMessage.trim()) {
+      const message = {
+        sender: 'Teacher',
+        text: newMessage,
+        timestamp: new Date().toLocaleTimeString()
+      };
+      socket.emit('teacher-message', message);
+      setMessages([...messages, message]);
+      setNewMessage('');
+    }
+  };
+
+  const kickStudent = (studentName) => {
+    if (window.confirm(`Are you sure you want to kick ${studentName}?`)) {
+      socket.emit('kick-student', studentName);
+      setStudents(students.filter(name => name !== studentName));
+    }
   };
 
   if (!isAuthenticated) {
@@ -117,112 +156,170 @@ function TeacherView() {
 
   return (
     <div className="teacher-view">
-      {!activePoll ? (
-        <div className="poll-creator">
-          <h1>Create a New Poll</h1>
-          <p>Enter your question and options below</p>
+      {/* Menu Toggle Button */}
+      <button 
+        className="menu-toggle"
+        onClick={() => setIsMenuOpen(!isMenuOpen)}
+      >
+        {isMenuOpen ? '×' : '☰'}
+      </button>
 
-          <div className="form-group">
-            <label>Question</label>
-            <input
-              type="text"
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder="Enter your question"
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Time limit (seconds, 10-300)</label>
-            <input
-              type="number"
-              value={timeLimit}
-              onChange={(e) => setTimeLimit(Math.max(10, Math.min(300, e.target.value)))}
-              min="10"
-              max="300"
-            />
-          </div>
-
-          <div className="options-editor">
-            <label>Poll Options (check correct answers)</label>
-            {options.map(option => (
-              <div key={option.id} className="option-item">
-                <input
-                  type="checkbox"
-                  checked={option.checked}
-                  onChange={() => toggleOption(option.id)}
-                  disabled={!option.text.trim()}
-                />
-                <input
-                  type="text"
-                  value={option.text}
-                  onChange={(e) => updateOption(option.id, e.target.value)}
-                  placeholder="Option text"
-                />
-                {!option.text.trim() && (
-                  <span className="hint-text">(Enter text to enable)</span>
-                )}
-              </div>
-            ))}
-            <button className="add-option" onClick={addOption}>
-              + Add Option
-            </button>
-          </div>
-
+      {/* Side Menu */}
+      <div className={`side-menu ${isMenuOpen ? 'open' : ''}`}>
+        <div className="menu-tabs">
           <button 
-            className="submit-btn" 
-            onClick={createPoll}
-            disabled={!question.trim() || options.filter(opt => opt.text.trim()).length < 2}
+            className={activeTab === 'chat' ? 'active' : ''}
+            onClick={() => setActiveTab('chat')}
           >
-            Create Poll
+            Chat
+          </button>
+          <button 
+            className={activeTab === 'participants' ? 'active' : ''}
+            onClick={() => setActiveTab('participants')}
+          >
+            Participants ({students.length})
           </button>
         </div>
-      ) : (
-        <div className="poll-results">
-          <div className="poll-header">
-            <h1>Live Poll Results</h1>
-            <h2>{activePoll.question}</h2>
-            <div className="time-info">
-              ⏱️ {activePoll.timeLimit}s poll duration
+
+        {activeTab === 'chat' && (
+          <div className="chat-container">
+            <div className="messages">
+              {messages.map((msg, i) => (
+                <div key={i} className={`message ${msg.sender === 'Teacher' ? 'teacher' : 'student'}`}>
+                  <strong>{msg.sender}:</strong> {msg.text}
+                  <span className="timestamp">{msg.timestamp}</span>
+                </div>
+              ))}
+            </div>
+            <div className="message-input">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type a message..."
+                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+              />
+              <button onClick={sendMessage}>Send</button>
             </div>
           </div>
+        )}
 
-          <div className="results-list">
-            {activePoll.options.map((option, index) => (
-              <div key={index} className="result-item">
-                <div className="option-info">
-                  <span className="option-text">{option}</span>
-                  {activePoll.correctAnswers.includes(option) && (
-                    <span className="correct-mark">✓ Correct Answer</span>
-                  )}
-                </div>
-                <div className="percentage-bar-container">
-                  <div 
-                    className="percentage-bar" 
-                    style={{ width: `${results[option] || 0}%` }}
-                  ></div>
-                  <span className="percentage-text">{results[option] || 0}%</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="student-list">
-            <h3>Participating Students ({students.length})</h3>
+        {activeTab === 'participants' && (
+          <div className="participants-list">
+            <h3>Connected Students</h3>
             <ul>
-              {students.map((student, index) => (
-                <li key={index}>
-                  <span className="student-badge">👤</span> {student}
+              {students.map((student, i) => (
+                <li key={i}>
+                  <span>👤 {student}</span>
+                  <button 
+                    className="kick-btn"
+                    onClick={() => kickStudent(student)}
+                    title="Kick student"
+                  >
+                    ×
+                  </button>
                 </li>
               ))}
             </ul>
           </div>
+        )}
+      </div>
 
-          <button className="end-poll-btn" onClick={endPoll}>
-            End Poll and Create New
-          </button>
-        </div>
-      )}
+      {/* Main Content */}
+      <div className={`main-content ${isMenuOpen ? 'menu-open' : ''}`}>
+        {!activePoll ? (
+          <div className="poll-creator">
+            <h1>Create a New Poll</h1>
+            <p>Enter your question and options below</p>
+
+            <div className="form-group">
+              <label>Question</label>
+              <input
+                type="text"
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                placeholder="Enter your question"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Time limit (seconds, 10-300)</label>
+              <input
+                type="number"
+                value={timeLimit}
+                onChange={(e) => setTimeLimit(Math.max(10, Math.min(300, e.target.value)))}
+                min="10"
+                max="300"
+              />
+            </div>
+
+            <div className="options-editor">
+              <label>Poll Options (check correct answers)</label>
+              {options.map(option => (
+                <div key={option.id} className="option-item">
+                  <input
+                    type="checkbox"
+                    checked={option.checked}
+                    onChange={() => toggleOption(option.id)}
+                    disabled={!option.text.trim()}
+                  />
+                  <input
+                    type="text"
+                    value={option.text}
+                    onChange={(e) => updateOption(option.id, e.target.value)}
+                    placeholder="Option text"
+                  />
+                </div>
+              ))}
+              <button className="add-option" onClick={addOption}>
+                + Add Option
+              </button>
+            </div>
+
+            <button 
+              className="submit-btn" 
+              onClick={createPoll}
+              disabled={!question.trim() || options.filter(opt => opt.text.trim()).length < 2}
+            >
+              Create Poll
+            </button>
+          </div>
+        ) : (
+          <div className="poll-results">
+            <div className="poll-header">
+              <h1>Live Poll Results</h1>
+              <h2>{activePoll.question}</h2>
+              <div className="time-info">
+                ⏱️ {activePoll.timeLimit}s poll duration
+              </div>
+            </div>
+
+            <div className="results-list">
+              {activePoll.options.map((option, index) => (
+                <div key={index} className="result-item">
+                  <div className="option-info">
+                    <span className="option-text">{option}</span>
+                    {activePoll.correctAnswers.includes(option) && (
+                      <span className="correct-mark">✓ Correct Answer</span>
+                    )}
+                  </div>
+                  <div className="percentage-bar-container">
+                    <div 
+                      className="percentage-bar" 
+                      style={{ width: `${results[option] || 0}%` }}
+                    ></div>
+                    <span className="percentage-text">{results[option] || 0}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button className="end-poll-btn" onClick={endPoll}>
+              End Poll and Create New
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -25,12 +25,14 @@ const io = socketIo(server, {
 const TEACHER_PASSWORD = process.env.TEACHER_PASSWORD || 'teacher123';
 const MAX_POLL_DURATION = 300; // 5 minutes maximum
 
-// Store active poll and results
+// Store application state
 let activePoll = null;
 let results = {};
 let teacherSocket = null;
+const connectedStudents = new Map(); // socket.id -> student name
+const chatMessages = [];
 
-// Helper function to calculate percentages
+// Helper functions
 const calculatePercentages = () => {
   if (!activePoll) return {};
   
@@ -44,6 +46,16 @@ const calculatePercentages = () => {
   return percentages;
 };
 
+const broadcastStudentList = () => {
+  io.emit('student-list-updated', Array.from(connectedStudents.values()));
+};
+
+const broadcastChatMessage = (message) => {
+  io.emit('chat-message', message);
+  chatMessages.push(message);
+};
+
+// Socket.io connection handler
 io.on('connection', (socket) => {
   console.log(`New connection: ${socket.id}`);
 
@@ -54,169 +66,350 @@ io.on('connection', (socket) => {
 
   // Handle teacher authentication
   socket.on('identify-teacher', (password, callback) => {
-    if (password === TEACHER_PASSWORD) {
-      teacherSocket = socket.id;
-      console.log(`Teacher identified: ${socket.id}`);
+    try {
+      if (password === TEACHER_PASSWORD) {
+        teacherSocket = socket.id;
+        socket.isTeacher = true;
+        console.log(`Teacher identified: ${socket.id}`);
+        
+        // Send current state to teacher
+        if (activePoll) {
+          socket.emit('poll-created', activePoll);
+          socket.emit('results-updated', calculatePercentages());
+        }
+        socket.emit('chat-history', chatMessages);
+        socket.emit('student-list-updated', Array.from(connectedStudents.values()));
+        
+        if (typeof callback === 'function') {
+          callback({ status: 'success' });
+        }
+      } else {
+        console.warn(`Failed teacher authentication attempt from ${socket.id}`);
+        if (typeof callback === 'function') {
+          callback({ error: 'Invalid credentials' });
+        }
+      }
+    } catch (error) {
+      console.error('Error in teacher authentication:', error);
+      if (typeof callback === 'function') {
+        callback({ error: 'Authentication failed' });
+      }
+    }
+  });
+
+  // Handle student registration
+  socket.on('register-student', (data, callback) => {
+    try {
+      const { name } = data || {};
       
-      // Send current state to reconnecting teacher
+      if (!name || typeof name !== 'string' || name.trim().length < 2) {
+        if (typeof callback === 'function') {
+          callback({ error: 'Invalid student name (min 2 characters)' });
+        }
+        return;
+      }
+      
+      const studentName = name.trim();
+      
+      // Check if name is already taken
+      if (Array.from(connectedStudents.values()).includes(studentName)) {
+        if (typeof callback === 'function') {
+          callback({ error: 'Name already in use' });
+        }
+        return;
+      }
+      
+      connectedStudents.set(socket.id, studentName);
+      console.log(`Student registered: ${studentName} (${socket.id})`);
+      
+      // Notify all clients
+      broadcastStudentList();
+      broadcastChatMessage({
+        sender: 'System',
+        text: `${studentName} joined the classroom`,
+        timestamp: new Date().toISOString(),
+        isSystem: true
+      });
+      
+      // Send current poll if active
       if (activePoll) {
         socket.emit('poll-created', activePoll);
         socket.emit('results-updated', calculatePercentages());
       }
       
-      callback({ status: 'success' });
-    } else {
-      console.warn(`Failed teacher authentication attempt from ${socket.id}`);
-      callback({ error: 'Invalid credentials' });
+      if (typeof callback === 'function') {
+        callback({ status: 'success' });
+      }
+    } catch (error) {
+      console.error('Error in student registration:', error);
+      if (typeof callback === 'function') {
+        callback({ error: 'Registration failed' });
+      }
     }
   });
 
-  // Handle poll requests from students
+  // Handle poll requests
   socket.on('request-poll', (callback) => {
     if (typeof callback === 'function') {
       callback(activePoll || null);
     }
   });
 
-  // Send current poll to new connections
-  if (activePoll) {
-    socket.emit('poll-created', activePoll);
-    socket.emit('results-updated', calculatePercentages());
-  }
-
   // Teacher creates a poll
   socket.on('create-poll', (poll, callback) => {
-    // Authorization check
-    if (socket.id !== teacherSocket) {
-      console.warn(`Unauthorized poll creation attempt from ${socket.id}`);
-      if (typeof callback === 'function') {
-        return callback({ error: 'Unauthorized' });
+    try {
+      if (!socket.isTeacher || socket.id !== teacherSocket) {
+        console.warn(`Unauthorized poll creation attempt from ${socket.id}`);
+        if (typeof callback === 'function') {
+          callback({ error: 'Unauthorized' });
+        }
+        return;
       }
-      return socket.emit('error', { message: 'Unauthorized poll creation attempt' });
-    }
 
-    // Validation
-    if (!poll || !poll.question || !Array.isArray(poll.options) || poll.options.length < 2) {
-      const error = 'Invalid poll data: question and at least 2 options required';
-      console.warn(error);
-      if (typeof callback === 'function') {
-        return callback({ error });
+      // Validation
+      if (!poll?.question || !Array.isArray(poll.options) || poll.options.length < 2) {
+        const error = 'Invalid poll data: question and at least 2 options required';
+        console.warn(error);
+        if (typeof callback === 'function') {
+          callback({ error });
+        }
+        return;
       }
-      return socket.emit('error', { message: error });
-    }
 
-    // Create new poll
-    activePoll = {
-      question: poll.question.trim(),
-      options: poll.options
-        .filter(opt => typeof opt === 'string')
-        .map(opt => opt.trim())
-        .filter(opt => opt.length > 0),
-      correctAnswers: Array.isArray(poll.correctAnswers) 
-        ? poll.correctAnswers
+      // Create new poll
+      activePoll = {
+        question: poll.question.trim(),
+        options: poll.options
           .filter(opt => typeof opt === 'string')
           .map(opt => opt.trim())
-          .filter(opt => opt.length > 0)
-        : [],
-      timeLimit: Math.min(Number(poll.timeLimit || 60), MAX_POLL_DURATION),
-      createdAt: Date.now()
-    };
-    
-    results = {};
-    console.log('New poll created:', activePoll);
-    
-    // Broadcast to all clients
-    io.emit('poll-created', activePoll);
-    
-    // Send acknowledgement
-    if (typeof callback === 'function') {
-      callback({ status: 'success', poll: activePoll });
-    }
+          .filter(opt => opt.length > 0),
+        correctAnswers: Array.isArray(poll.correctAnswers) 
+          ? poll.correctAnswers
+            .filter(opt => typeof opt === 'string')
+            .map(opt => opt.trim())
+            .filter(opt => opt.length > 0)
+          : [],
+        timeLimit: Math.min(Number(poll.timeLimit || 60), MAX_POLL_DURATION),
+        createdAt: Date.now()
+      };
+      
+      results = {};
+      console.log('New poll created:', activePoll);
+      
+      // Broadcast to all clients
+      io.emit('poll-created', activePoll);
+      
+      if (typeof callback === 'function') {
+        callback({ status: 'success', poll: activePoll });
+      }
 
-    // Auto-end poll after timeout
-    if (activePoll.timeLimit > 0) {
-      setTimeout(() => {
-        if (activePoll) { // Check if poll still exists
-          console.log('Poll timeout reached');
-          io.emit('poll-ended');
-          activePoll = null;
-        }
-      }, activePoll.timeLimit * 1000);
+      // Auto-end poll after timeout
+      if (activePoll.timeLimit > 0) {
+        setTimeout(() => {
+          if (activePoll) {
+            console.log('Poll timeout reached');
+            io.emit('poll-ended');
+            activePoll = null;
+          }
+        }, activePoll.timeLimit * 1000);
+      }
+    } catch (error) {
+      console.error('Error in poll creation:', error);
+      if (typeof callback === 'function') {
+        callback({ error: 'Poll creation failed' });
+      }
     }
   });
 
   // Student submits answer
   socket.on('submit-answer', ({ answer, studentName, pollId }, callback) => {
-    if (!activePoll || activePoll.question !== pollId) {
-      const error = 'No active poll or poll ID mismatch';
-      console.warn(`${error} from ${socket.id}`);
-      if (typeof callback === 'function') {
-        return callback({ error });
+    try {
+      if (!activePoll || activePoll.question !== pollId) {
+        const error = 'No active poll or poll ID mismatch';
+        console.warn(`${error} from ${socket.id}`);
+        if (typeof callback === 'function') {
+          callback({ error });
+        }
+        return;
       }
-      return socket.emit('error', { message: error });
-    }
 
-    if (!activePoll.options.includes(answer)) {
-      const error = `Invalid answer "${answer}" from ${socket.id}`;
-      console.warn(error);
-      if (typeof callback === 'function') {
-        return callback({ error });
+      if (!activePoll.options.includes(answer)) {
+        const error = `Invalid answer "${answer}" from ${socket.id}`;
+        console.warn(error);
+        if (typeof callback === 'function') {
+          callback({ error: 'Invalid answer' });
+        }
+        return;
       }
-      return socket.emit('error', { message: 'Invalid answer' });
-    }
 
-    // Update results
-    results[answer] = (results[answer] || 0) + 1;
-    const percentages = calculatePercentages();
-    
-    console.log(`Answer received from ${studentName}:`, {
-      answer,
-      isCorrect: activePoll.correctAnswers.includes(answer),
-      percentages
-    });
-    
-    // Broadcast updated results
-    io.emit('results-updated', percentages);
-    
-    // Send acknowledgement
-    if (typeof callback === 'function') {
-      callback({ 
-        status: 'success',
-        isCorrect: activePoll.correctAnswers.includes(answer)
+      // Update results
+      results[answer] = (results[answer] || 0) + 1;
+      const percentages = calculatePercentages();
+      
+      console.log(`Answer received from ${studentName}:`, {
+        answer,
+        isCorrect: activePoll.correctAnswers.includes(answer),
+        percentages
       });
+      
+      // Broadcast updated results
+      io.emit('results-updated', percentages);
+      
+      if (typeof callback === 'function') {
+        callback({ 
+          status: 'success',
+          isCorrect: activePoll.correctAnswers.includes(answer)
+        });
+      }
+    } catch (error) {
+      console.error('Error in answer submission:', error);
+      if (typeof callback === 'function') {
+        callback({ error: 'Answer submission failed' });
+      }
     }
   });
 
   // Teacher ends poll manually
   socket.on('end-poll', (callback) => {
-    if (socket.id !== teacherSocket) {
-      const error = 'Unauthorized poll end attempt';
-      console.warn(`${error} from ${socket.id}`);
-      if (typeof callback === 'function') {
-        return callback({ error });
+    try {
+      if (!socket.isTeacher || socket.id !== teacherSocket) {
+        const error = 'Unauthorized poll end attempt';
+        console.warn(`${error} from ${socket.id}`);
+        if (typeof callback === 'function') {
+          callback({ error });
+        }
+        return;
       }
-      return socket.emit('error', { message: error });
-    }
 
-    if (activePoll) {
-      console.log('Teacher ended poll manually');
-      io.emit('poll-ended');
-      activePoll = null;
-      
-      if (typeof callback === 'function') {
-        callback({ status: 'success' });
+      if (activePoll) {
+        console.log('Teacher ended poll manually');
+        io.emit('poll-ended');
+        activePoll = null;
+        if (typeof callback === 'function') {
+          callback({ status: 'success' });
+        }
       }
+    } catch (error) {
+      console.error('Error in ending poll:', error);
+      if (typeof callback === 'function') {
+        callback({ error: 'Failed to end poll' });
+      }
+    }
+  });
+
+  // Chat functionality
+  socket.on('teacher-message', (message) => {
+    try {
+      if (!socket.isTeacher || socket.id !== teacherSocket) {
+        console.warn(`Unauthorized chat message from ${socket.id}`);
+        return;
+      }
+      
+      const chatMessage = {
+        sender: 'Teacher',
+        text: message.text,
+        timestamp: new Date().toISOString()
+      };
+      
+      broadcastChatMessage(chatMessage);
+    } catch (error) {
+      console.error('Error in teacher message:', error);
+    }
+  });
+
+  socket.on('student-message', (message) => {
+    try {
+      const studentName = connectedStudents.get(socket.id);
+      if (!studentName) {
+        console.warn(`Unauthenticated student message from ${socket.id}`);
+        return;
+      }
+      
+      const chatMessage = {
+        sender: studentName,
+        text: message.text,
+        timestamp: new Date().toISOString()
+      };
+      
+      broadcastChatMessage(chatMessage);
+    } catch (error) {
+      console.error('Error in student message:', error);
+    }
+  });
+
+  // Kick student functionality
+  socket.on('kick-student', (studentName) => {
+    try {
+      if (!socket.isTeacher || socket.id !== teacherSocket) {
+        console.warn(`Unauthorized kick attempt from ${socket.id}`);
+        return;
+      }
+      
+      // Find student socket
+      let studentSocketId = null;
+      for (const [id, name] of connectedStudents.entries()) {
+        if (name === studentName) {
+          studentSocketId = id;
+          break;
+        }
+      }
+      
+      if (studentSocketId) {
+        // Notify student before disconnecting
+        io.to(studentSocketId).emit('you-were-kicked');
+        io.sockets.sockets.get(studentSocketId)?.disconnect();
+        
+        console.log(`Student ${studentName} was kicked by teacher`);
+        broadcastChatMessage({
+          sender: 'System',
+          text: `${studentName} was removed from the classroom`,
+          timestamp: new Date().toISOString(),
+          isSystem: true
+        });
+      }
+    } catch (error) {
+      console.error('Error in kicking student:', error);
     }
   });
 
   // Handle disconnection
   socket.on('disconnect', () => {
-    console.log(`Disconnected: ${socket.id}`);
-    if (socket.id === teacherSocket) {
-      teacherSocket = null;
-      console.log('Teacher disconnected');
+    try {
+      console.log(`Disconnected: ${socket.id}`);
+      
+      const studentName = connectedStudents.get(socket.id);
+      if (studentName) {
+        connectedStudents.delete(socket.id);
+        console.log(`Student disconnected: ${studentName}`);
+        broadcastStudentList();
+        broadcastChatMessage({
+          sender: 'System',
+          text: `${studentName} left the classroom`,
+          timestamp: new Date().toISOString(),
+          isSystem: true
+        });
+      }
+      
+      if (socket.id === teacherSocket) {
+        teacherSocket = null;
+        console.log('Teacher disconnected');
+      }
+    } catch (error) {
+      console.error('Error in disconnect handler:', error);
     }
   });
+
+  // Send initial data to new connections
+  if (activePoll) {
+    socket.emit('poll-created', activePoll);
+    socket.emit('results-updated', calculatePercentages());
+  }
+  
+  if (connectedStudents.has(socket.id)) {
+    socket.emit('student-list-updated', Array.from(connectedStudents.values()));
+  }
+  
+  socket.emit('chat-history', chatMessages);
 });
 
 // Health check endpoint
@@ -226,7 +419,9 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     activePoll: !!activePoll,
     connections: io.engine.clientsCount,
-    teacherConnected: !!teacherSocket
+    teacherConnected: !!teacherSocket,
+    studentsConnected: connectedStudents.size,
+    chatMessages: chatMessages.length
   });
 });
 
