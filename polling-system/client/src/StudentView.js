@@ -1,17 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 
-const socket = io('http://localhost:4000', {
+const socket = io('http://localhost:4000', { // done 
     reconnection: true,
-    reconnectionAttempts: Infinity,
+    reconnectionAttempts: Infinity,         
     reconnectionDelay: 1000,
     autoConnect: false
 });
 
 function StudentView() {
-    // State declarations
+
+    //---------------------------------------------------state declaration---------------------------------------------------//
     const [name, setName] = useState('');
     const [nameSubmitted, setNameSubmitted] = useState(false);
+
     const [poll, setPoll] = useState(null);
     const [selectedOption, setSelectedOption] = useState('');
     const [results, setResults] = useState({});
@@ -28,6 +30,12 @@ function StudentView() {
     });
     const timerRef = useRef(null);
 
+    //paticipation update
+    const handleParticipationUpdate = (status) => {
+        setParticipationStatus(status);
+    };
+
+    //---------------------------------------------------useEffect hooks---------------------------------------------------//
     // Initialize from session storage
     useEffect(() => {
         const savedName = sessionStorage.getItem('studentName');
@@ -35,6 +43,16 @@ function StudentView() {
             setName(savedName);
             setNameSubmitted(true);
         }
+    }, []);
+
+    // listen for changes in participation status
+    useEffect(() => {
+        socket.on('participation-update', (status) => {
+            setParticipationStatus(status);
+        });
+        return () => {
+            socket.off('participation-update', handleParticipationUpdate);
+        };
     }, []);
 
     // Socket connection and event handlers
@@ -88,10 +106,6 @@ function StudentView() {
             setResults(newResults);
         };
 
-        const handleParticipationUpdate = (status) => {
-            setParticipationStatus(status);
-        };
-
         socket.on('connect', handleConnect);
         socket.on('disconnect', handleDisconnect);
         socket.on('poll-created', handlePollCreated);
@@ -100,7 +114,7 @@ function StudentView() {
 
         connectToSocket();
 
-        return () => {
+        return () => { //cleanup function
             socket.off('connect', handleConnect);
             socket.off('disconnect', handleDisconnect);
             socket.off('poll-created', handlePollCreated);
@@ -110,6 +124,9 @@ function StudentView() {
         };
     }, [nameSubmitted, name]);
 
+    //---------------------------------------------------event handlers---------------------------------------------------//
+
+    // user_name (done)
     const handleNameSubmit = (e) => {
         e.preventDefault();
         if (name.trim().length >= 2) {
@@ -118,6 +135,12 @@ function StudentView() {
         }
     };
 
+    const handleNewTab = () => {
+        sessionStorage.removeItem('studentName');
+        window.open(window.location.href, '_blank');
+    };
+
+    //submit answer 
     const handleSubmitAnswer = () => {
         if (!selectedOption || !poll || !poll.correctAnswers) return;
 
@@ -141,12 +164,9 @@ function StudentView() {
         });
     };
 
-    const handleNewTab = () => {
-        sessionStorage.removeItem('studentName');
-        window.open(window.location.href, '_blank');
-    };
+    
 
-    // Render methods
+    //---------------------------------------------------rendering---------------------------------------------------//
     if (!nameSubmitted) {
         return (
             <div className="name-prompt">

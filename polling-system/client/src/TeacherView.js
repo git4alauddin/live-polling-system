@@ -22,7 +22,7 @@ function TeacherView() {
         answered: 0,
         total: 0
     });
-
+    const [refreshRequired, setRefreshRequired] = useState(false);
     // Chat and participants state
     const [activeTab, setActiveTab] = useState('results');
     const [messages, setMessages] = useState([]);
@@ -102,32 +102,7 @@ function TeacherView() {
         };
     }, []);
 
-    const endPoll = () => {
-        socket.emit('end-poll', (response) => {
-            if (response?.error) {
-                alert('Failed to end poll: ' + response.error);
-            }
-        });
-    };
-
-    const addOption = () => {
-        const newId = options.length > 0 ? Math.max(...options.map(o => o.id)) + 1 : 1;
-        setOptions([...options, { id: newId, text: '', checked: false }]);
-    };
-
-    const updateOption = (id, text) => {
-        setOptions(options.map(opt =>
-            opt.id === id ? { ...opt, text } : opt
-        ));
-    };
-
-    const toggleOption = (id) => {
-        setOptions(options.map(opt =>
-            opt.id === id ? { ...opt, checked: !opt.checked } : opt
-        ));
-    };
-
-    const createPoll = () => {
+        const createPoll = () => {
         if (!isAuthenticated) {
             alert('Please authenticate as teacher first');
             return;
@@ -171,6 +146,43 @@ function TeacherView() {
             }
         });
     };
+
+    const handleEndPoll = () => {
+        if (!canCreateNewPoll) {
+            alert(`Cannot end poll - ${answerStatus.answered}/${answerStatus.total} students have answered`);
+            return;
+        }
+        // call endPoll function
+        endPoll();
+    };
+
+    const endPoll = () => {
+        socket.emit('end-poll', (response) => {
+            if (response?.error) {
+                alert('Failed to end poll: ' + response.error);
+                return;
+            }
+        });
+    };
+
+    const addOption = () => {
+        const newId = options.length > 0 ? Math.max(...options.map(o => o.id)) + 1 : 1;
+        setOptions([...options, { id: newId, text: '', checked: false }]);
+    };
+
+    const updateOption = (id, text) => {
+        setOptions(options.map(opt =>
+            opt.id === id ? { ...opt, text } : opt
+        ));
+    };
+
+    const toggleOption = (id) => {
+        setOptions(options.map(opt =>
+            opt.id === id ? { ...opt, checked: !opt.checked } : opt
+        ));
+    };
+
+
 
     const sendMessage = () => {
         if (newMessage.trim()) {
@@ -273,7 +285,7 @@ function TeacherView() {
 
             {/* Main Content */}
             <div className={`main-content ${isMenuOpen ? 'menu-open' : ''}`}>
-                {!activePoll ? (
+                {(!activePoll && refreshRequired) ? (
                     <div className="poll-creator">
                         <h1>Create a New Poll</h1>
                         <p>Enter your question and options below</p>
@@ -373,14 +385,14 @@ function TeacherView() {
                             ))}
                         </div>
 
-                        <button className="end-poll-btn" onClick={endPoll}>
-                            End Poll and Create New
+                        <button className="end-poll-btn" onClick={handleEndPoll}>
+                            {canCreateNewPoll ? 'End Poll and Create New' : `End Poll (${answerStatus.answered}/${answerStatus.total} answered)`}
                         </button>
                     </div>
                 )}
             </div>
         </div>
     );
-}
+    }   
 
 export default TeacherView;

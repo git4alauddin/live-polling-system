@@ -226,6 +226,7 @@ io.on('connection', (socket) => {
                         console.log('Poll timeout reached');
                         io.emit('poll-ended');
                         activePoll = null;
+                        refreshRequired = false; // Indicate that a new poll can be created
                     }
                 }, activePoll.timeLimit * 1000);
             }
@@ -265,6 +266,12 @@ io.on('connection', (socket) => {
 
             // Broadcast updated results
             io.emit('results-updated', percentages);
+
+            //broadcast participation status
+            io.emit('participation-update', {
+                answered: answeredStudents.size,
+                total: connectedStudents.size
+            });
 
             // Notify teacher about answer status
             if (socket.isTeacher || teacherSocket) {
