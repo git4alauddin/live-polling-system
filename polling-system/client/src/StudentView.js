@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 
-const socket = io('https://live-polling-system-ktzn.vercel.app/', {
+const socket = io('http://localhost:4000',
+    // "https://live-polling-system-ktzn.vercel.app",
+    {
     reconnection: true,
     reconnectionAttempts: Infinity,
     reconnectionDelay: 1000,

@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 
-const socket = io('https://live-polling-system-ktzn.vercel.app/', {
-  reconnection: true,
-  reconnectionAttempts: Infinity,
-  reconnectionDelay: 1000,
-  autoConnect: false
+const socket = io('http://localhost:4000',
+    //"https://live-polling-system-ktzn.vercel.app",
+    {
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 1000,
+    autoConnect: false
 });
 
 function TeacherView() {
