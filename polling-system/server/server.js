@@ -74,8 +74,8 @@ const broadcastChatMessage = (message) => {
 };
 
 const checkAllStudentsAnswered = () => {
-    return connectedStudents.size > 0 && 
-           answeredStudents.size === connectedStudents.size;
+    return connectedStudents.size > 0 &&
+        answeredStudents.size === connectedStudents.size;
 };
 
 const validateStudentName = (name) => {
@@ -144,7 +144,7 @@ io.on('connection', (socket) => {
     socket.on('register-student', (data, callback) => {
         try {
             const { name } = data || {};
-            
+
             if (!validateStudentName(name)) {
                 return callback?.({ error: 'Invalid student name (2-20 characters required)' });
             }
@@ -156,11 +156,11 @@ io.on('connection', (socket) => {
                 return callback?.({ error: 'Name already in use' });
             }
 
-            connectedStudents.set(socket.id, { 
+            connectedStudents.set(socket.id, {
                 name: studentName,
                 joinedAt: new Date().toISOString()
             });
-            
+
             console.log(`Student registered: ${studentName} (${socket.id})`);
 
             // Notify all clients
@@ -414,10 +414,10 @@ io.on('connection', (socket) => {
             // Find student socket
             const studentEntry = Array.from(connectedStudents.entries())
                 .find(([_, student]) => student.name === studentName);
-            
+
             if (studentEntry) {
                 const [studentSocketId] = studentEntry;
-                
+
                 // Clean up state
                 answeredStudents.delete(studentSocketId);
                 connectedStudents.delete(studentSocketId);
@@ -461,7 +461,7 @@ io.on('connection', (socket) => {
                 connectedStudents.delete(socket.id);
                 answeredStudents.delete(socket.id);
                 console.log(`Student disconnected: ${student.name}`);
-                
+
                 broadcastStudentList();
                 broadcastChatMessage({
                     sender: 'System',

@@ -2,13 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 
 const socket = io(//'http://localhost:4000',
-    "polling-server-production.up.railway.app",
-    {
+  "polling-server-production.up.railway.app",
+  {
     reconnection: true,
     reconnectionAttempts: Infinity,
     reconnectionDelay: 1000,
     autoConnect: false
-});
+  });
 
 function TeacherView() {
   // Poll creation state
@@ -43,7 +43,7 @@ function TeacherView() {
     };
 
     const handleConnect = () => {
-      console.log('✅ Connected to server with ID:', socket.id);
+      console.log('Connected to server with ID:', socket.id);
       setConnectionStatus('connected');
       socket.emit('identify-teacher', 'teacher123', (response) => {
         if (response.error) {
@@ -56,7 +56,7 @@ function TeacherView() {
     };
 
     const handleDisconnect = () => {
-      console.log('⚠️ Disconnected from server');
+      console.log('Disconnected from server');
       setConnectionStatus('disconnected');
     };
 
@@ -290,8 +290,8 @@ function TeacherView() {
           <div className="chat-container">
             <div className="messages">
               {messages.map((msg, i) => (
-                <div 
-                  key={i} 
+                <div
+                  key={i}
                   className={`message ${msg.sender === 'Teacher' ? 'teacher' : msg.isSystem ? 'system' : 'student'}`}
                 >
                   <div className="message-header">
@@ -313,7 +313,7 @@ function TeacherView() {
                 placeholder="Type a message..."
                 onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
               />
-              <button 
+              <button
                 onClick={sendMessage}
                 disabled={!newMessage.trim()}
               >
@@ -347,7 +347,7 @@ function TeacherView() {
           </div>
         )}
       </div>
-      
+
       {/* Main Content */}
       <div className={`main-content ${isMenuOpen ? 'menu-open' : ''}`}>
         {!activePoll ? (
@@ -430,8 +430,8 @@ function TeacherView() {
                 <div className="progress-bar">
                   <div
                     className="progress-fill"
-                    style={{ 
-                      width: `${answerStatus.total > 0 ? (answerStatus.answered / answerStatus.total) * 100 : 0}%` 
+                    style={{
+                      width: `${answerStatus.total > 0 ? (answerStatus.answered / answerStatus.total) * 100 : 0}%`
                     }}
                   ></div>
                 </div>
@@ -459,8 +459,8 @@ function TeacherView() {
             </div>
 
             <div className="poll-controls">
-              <button 
-                className="end-poll-btn" 
+              <button
+                className="end-poll-btn"
                 onClick={endPoll}
                 disabled={!canCreateNewPoll}
               >

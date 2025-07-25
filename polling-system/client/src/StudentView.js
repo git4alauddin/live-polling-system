@@ -4,11 +4,11 @@ import { io } from 'socket.io-client';
 const socket = io(//'http://localhost:4000',
     "polling-server-production.up.railway.app",
     {
-    reconnection: true,
-    reconnectionAttempts: Infinity,
-    reconnectionDelay: 1000,
-    autoConnect: false
-});
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000,
+        autoConnect: false
+    });
 
 function StudentView() {
     //---------------------------------------------------state declaration---------------------------------------------------//
@@ -54,18 +54,18 @@ function StudentView() {
         };
 
         const handleConnect = () => {
-            console.log('✅ Connected to server with ID:', socket.id);
+            console.log('Connected to server with ID:', socket.id);
             setConnectionStatus('connected');
             socket.emit('register-student', { name });
         };
 
         const handleDisconnect = () => {
-            console.log('⚠️ Disconnected from server');
+            console.log('Disconnected from server');
             setConnectionStatus('disconnected');
         };
 
         const handlePollCreated = (newPoll) => {
-            console.log('📩 Received new poll:', newPoll);
+            console.log('Received new poll:', newPoll);
             const completePoll = {
                 ...newPoll,
                 correctAnswers: Array.isArray(newPoll.correctAnswers) ? newPoll.correctAnswers : []
@@ -92,7 +92,7 @@ function StudentView() {
         };
 
         const handleResultsUpdated = (newResults) => {
-            console.log('📊 Results updated:', newResults);
+            console.log('Results updated:', newResults);
             setResults(newResults);
         };
 
@@ -215,13 +215,13 @@ function StudentView() {
             <div className="student-header">
                 <span className="student-name">👤 {name}</span>
                 <div className="header-buttons">
-                    <button 
+                    <button
                         className={`view-toggle ${activeTab === 'poll' ? 'active' : ''}`}
                         onClick={() => setActiveTab('poll')}
                     >
                         Poll
                     </button>
-                    <button 
+                    <button
                         className={`view-toggle ${activeTab === 'chat' ? 'active' : ''}`}
                         onClick={() => setActiveTab('chat')}
                     >
@@ -342,8 +342,8 @@ function StudentView() {
                 <div className="chat-container">
                     <div className="messages">
                         {messages.map((msg, i) => (
-                            <div 
-                                key={i} 
+                            <div
+                                key={i}
                                 className={`message ${msg.sender === name ? 'own' : msg.sender === 'Teacher' ? 'teacher' : 'other'}`}
                             >
                                 <div className="message-header">
@@ -363,7 +363,7 @@ function StudentView() {
                             placeholder="Type a message..."
                             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                         />
-                        <button 
+                        <button
                             onClick={handleSendMessage}
                             disabled={!newMessage.trim()}
                         >
